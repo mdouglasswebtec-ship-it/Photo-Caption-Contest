@@ -2,7 +2,7 @@ services:
   - type: web
     name: photo-caption-contest
     env: node
-    buildCommand: npm install && npm run db:migrate
+    buildCommand: npm install && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all
     startCommand: npm start
     envVars:
       - key: NODE_ENV
