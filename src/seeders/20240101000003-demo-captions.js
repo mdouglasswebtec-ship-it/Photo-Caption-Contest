@@ -11,7 +11,7 @@ module.exports = {
         updatedAt: new Date(),
       },
       {
-        text: 'Nature's alarm clock, no snooze button available',
+        text: "Nature's alarm clock, no snooze button available",
         userId: 2,
         imageId: 1,
         createdAt: new Date(),
