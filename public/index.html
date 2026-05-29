@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Caption Contest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+        }
+        
+        .photo-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .photo-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .photo-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+        
+        .card-content {
+            padding: 20px;
+        }
+        
+        .photo-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .photo-description {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .captions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #eee;
+        }
+        
+        .caption-item {
+            background: #f8f9fa;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .caption-text {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .caption-author {
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        .add-caption {
+            margin-top: 15px;
+        }
+        
+        input, textarea, button {
+            font-family: inherit;
+            font-size: 1em;
+        }
+        
+        input[type="text"],
+        input[type="password"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .error {
+            color: #dc3545;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        
+        .success {
+            color: #28a745;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .modal-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .close {
+            float: right;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📸 Photo Caption Contest</h1>
+            <p class="subtitle">Submit your funniest captions!</p>
+        </header>
+        
+        <div id="gallery" class="gallery">
+            <div class="loading">Loading photos...</div>
+        </div>
+    </div>
+    
+    <script>
+        async function loadPhotos() {
+            const gallery = document.getElementById('gallery');
+            
+            try {
+                const response = await fetch('/api/images');
+                const data = await response.json();
+                
+                if (data.success) {
+                    gallery.innerHTML = data.data.map(photo => `
+                        <div class="photo-card">
+                            <img src="${photo.url}" alt="${photo.title}">
+                            <div class="card-content">
+                                <h3 class="photo-title">${photo.title}</h3>
+                                <p class="photo-description">${photo.description}</p>
+                                
+                                <div class="captions" id="captions-${photo.id}">
+                                    ${photo.Captions && photo.Captions.length > 0 ? 
+                                        photo.Captions.map(caption => `
+                                            <div class="caption-item">
+                                                <div class="caption-text">"${caption.text}"</div>
+                                                <div class="caption-author">— ${caption.User.username}</div>
+                                            </div>
+                                        `).join('') : 
+                                        '<p style="color: #999;">No captions yet. Be the first!</p>'
+                                    }
+                                </div>
+                                
+                                <div class="add-caption">
+                                    <input type="text" id="name-${photo.id}" placeholder="Your name" style="margin-bottom: 10px;">
+                                    <textarea id="caption-${photo.id}" placeholder="Add your funny caption..." rows="2"></textarea>
+                                    <button onclick="submitCaption(${photo.id})">Submit Caption</button>
+                                    <div id="error-${photo.id}" class="error"></div>
+                                    <div id="success-${photo.id}" class="success"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    gallery.innerHTML = '<p style="color: white;">Failed to load photos</p>';
+                }
+            } catch (error) {
+                gallery.innerHTML = '<p style="color: white;">Error loading photos</p>';
+            }
+        }
+        
+        async function submitCaption(imageId) {
+            const nameInput = document.getElementById(`name-${imageId}`);
+            const textarea = document.getElementById(`caption-${imageId}`);
+            const name = nameInput.value.trim() || 'Anonymous';
+            const text = textarea.value.trim();
+            const errorDiv = document.getElementById(`error-${imageId}`);
+            const successDiv = document.getElementById(`success-${imageId}`);
+            
+            errorDiv.textContent = '';
+            successDiv.textContent = '';
+            
+            if (!text) {
+                errorDiv.textContent = 'Please enter a caption';
+                return;
+            }
+            
+            try {
+                // Auto-register/login user with their name
+                const authResponse = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        username: name,
+                        email: `${name.toLowerCase().replace(/\s+/g, '')}@contest.com`,
+                        password: 'contest123'
+                    })
+                });
+                
+                // Try login if registration fails (user exists)
+                if (!authResponse.ok) {
+                    await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            username: name,
+                            password: 'contest123'
+                        })
+                    });
+                }
+                
+                // Submit caption
+                const response = await fetch(`/api/images/${imageId}/captions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    successDiv.textContent = 'Caption submitted! 🎉';
+                    textarea.value = '';
+                    setTimeout(() => loadPhotos(), 1000);
+                } else {
+                    errorDiv.textContent = data.message || 'Failed to submit caption';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Network error';
+            }
+        }
+        
+        // Initialize
+        loadPhotos();
+    </script>
+</body>
+</html>

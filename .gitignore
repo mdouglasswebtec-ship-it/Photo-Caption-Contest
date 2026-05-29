@@ -1,0 +1,10 @@
+.env
+node_modules/
+*.log
+uploads/
+*.sqlite
+*.jfif
+*.webp
+9445-*.jpg
+pexels-*.jpg
+winter-*.jpg
